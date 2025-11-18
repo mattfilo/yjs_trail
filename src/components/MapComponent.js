@@ -37,23 +37,17 @@ function MapComponent() {
     };
     }, []); // Empty dependency array ensures it runs once on mount
 
-    useEffect(() => {
-        if (mapInstance.current) {
-            addDrawInteraction(mapInstance.current, drawing);
-        }
-    }, [drawing]);
-
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-            <button onClick={() => setDrawing(!drawing)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
-                {drawing ? 'Stop Drawing' : 'Start Drawing'}
+            <button onClick={() => addDrawInteraction(mapInstance.current)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
+                {'Start Drawing'}
             </button>
         <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
         </div>
     );
 }
 
-function addDrawInteraction(map, drawing) {
+function addDrawInteraction(map) {
     const drawSource = new VectorSource();
     const drawLayer = new VectorLayer({
         source: drawSource
@@ -66,11 +60,12 @@ function addDrawInteraction(map, drawing) {
         geometryFunction: null,
         freehand: false,
     });
-    if (drawing) {
-        map.addInteraction(drawInteraction);
-    } else {
-        map.removeInteraction(drawInteraction);
-    };
+    drawInteraction.on('drawend', function (event) {
+        drawInteraction.setActive(false);
+        console.log('Polygon drawn:', event.feature.getGeometry().getCoordinates());
+    });
+
+    map.addInteraction(drawInteraction);
 }
 
 export default MapComponent;
