@@ -10,7 +10,7 @@ import VectorLayer   from 'ol/layer/Vector';
 import Draw          from 'ol/interaction/Draw';
 import GeoJSON       from 'ol/format/GeoJSON';
 
-function MapComponent() {
+function MapComponent(ydoc, provider) {
     const mapRef = useRef();
     const mapInstance = useRef(null); // To store the OpenLayers map instance
     const geojsonData = new GeoJSON();
