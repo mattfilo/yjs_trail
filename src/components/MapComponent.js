@@ -9,7 +9,7 @@ import VectorSource from 'ol/source/Vector';
 import VectorLayer   from 'ol/layer/Vector';
 import Draw          from 'ol/interaction/Draw';
 
-function MapComponent() {
+function MapComponent(ydoc, provider) {
     const mapRef = useRef();
     const mapInstance = useRef(null); // To store the OpenLayers map instance
     const [drawing, setDrawing] = useState(false);
