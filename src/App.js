@@ -10,11 +10,14 @@ function App() {
 
   const ROOM_NAME = 'ol-room';
 
+  // Initialize ydoc and provider
   if (!docRef.current) {
     const ydoc = new Y.Doc();
     docRef.current = ydoc;
   }
   if (!providerRef.current) {
+    // Don't forget to start the signaling server
+    // (run) PORT=4444 node ./node_modules/y-webrtc/bin/server.js
     const provider = new WebrtcProvider(ROOM_NAME, docRef.current, { signaling: ['ws://localhost:4444'] });
     providerRef.current = provider;
   }
