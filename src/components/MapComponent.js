@@ -13,7 +13,6 @@ import GeoJSON       from 'ol/format/GeoJSON';
 function MapComponent() {
     const mapRef = useRef();
     const mapInstance = useRef(null); // To store the OpenLayers map instance
-    const [drawing, setDrawing] = useState(false);
     const geojsonData = new GeoJSON();
 
     useEffect(() => {
@@ -41,10 +40,10 @@ function MapComponent() {
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+            <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
             <button onClick={() => addDrawInteraction(mapInstance.current, geojsonData)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
                 {'Start Drawing'}
             </button>
-        <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
         </div>
     );
 }
@@ -58,7 +57,7 @@ function addDrawInteraction(map, geojsonData) {
 
     const drawInteraction = new Draw({
         source: drawSource,
-        type: 'Polygon', // Change to desired geometry type
+        type: 'Polygon',
         geometryFunction: null,
         freehand: false,
     });
@@ -83,8 +82,8 @@ function ReadFromGeoJSON(map) {
             const vectorLayer = new VectorLayer({ source: vectorSource });
             map.addLayer(vectorLayer);
         })
-    .catch((error) => {
-        console.error('Error loading GeoJSON:', error);
+        .catch((error) => {
+            console.error('Error loading GeoJSON:', error);
     });
 }
 
