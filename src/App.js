@@ -21,7 +21,7 @@ function App() {
 
     // If a signaling server is running on a different machine make sure that
     // the machine's local ip address is correct in the signaling options below
-    const provider = new WebrtcProvider(ROOM_NAME, docRef.current, { signaling: ['ws://192.168.1.62:4444', 'ws://localhost:4444'] });
+    const provider = new WebrtcProvider(ROOM_NAME, docRef.current, { signaling: ['ws://192.168.1.62:4444'] });
     providerRef.current = provider;
   }
   
