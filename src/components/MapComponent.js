@@ -8,11 +8,13 @@ import { fromLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer   from 'ol/layer/Vector';
 import Draw          from 'ol/interaction/Draw';
+import GeoJSON       from 'ol/format/GeoJSON';
 
 function MapComponent() {
     const mapRef = useRef();
     const mapInstance = useRef(null); // To store the OpenLayers map instance
     const [drawing, setDrawing] = useState(false);
+    const geojsonData = new GeoJSON();
 
     useEffect(() => {
     mapInstance.current = new Map({
@@ -27,7 +29,7 @@ function MapComponent() {
         zoom: 5.1, // Initial zoom level
         }),
     });
-
+    ReadFromGeoJSON(mapInstance.current);
     // Cleanup function: Destroy the map when the component unmounts
     return () => {
         if (mapInstance.current) {
@@ -39,7 +41,7 @@ function MapComponent() {
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-            <button onClick={() => addDrawInteraction(mapInstance.current)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
+            <button onClick={() => addDrawInteraction(mapInstance.current, geojsonData)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
                 {'Start Drawing'}
             </button>
         <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
@@ -47,7 +49,7 @@ function MapComponent() {
     );
 }
 
-function addDrawInteraction(map) {
+function addDrawInteraction(map, geojsonData) {
     const drawSource = new VectorSource();
     const drawLayer = new VectorLayer({
         source: drawSource
@@ -60,12 +62,41 @@ function addDrawInteraction(map) {
         geometryFunction: null,
         freehand: false,
     });
+    map.addInteraction(drawInteraction);
     drawInteraction.on('drawend', function (event) {
         drawInteraction.setActive(false);
+        const hello = geojsonData.writeFeatureObject(event.feature);
+        // writeToGeoJSON(hello);
         console.log('Polygon drawn:', event.feature.getGeometry().getCoordinates());
     });
-
-    map.addInteraction(drawInteraction);
 }
+
+function ReadFromGeoJSON(map) {
+    // console.log(geojsondata);
+    fetch('/data.geojson')
+        .then(response => response.json())
+        .then(geojson => {
+            const vectorSource = new VectorSource({
+                features: (new GeoJSON()).readFeatures(geojson),
+            });
+
+            const vectorLayer = new VectorLayer({ source: vectorSource });
+            map.addLayer(vectorLayer);
+        })
+    .catch((error) => {
+        console.error('Error loading GeoJSON:', error);
+    });
+}
+
+// function writeToGeoJSON(geojsonData) { # Crap code, downloads after every draw
+//     const blob = new Blob([JSON.stringify(geojsonData)], { type: 'application/vnd.geo+json' });
+//     const url = URL.createObjectURL(blob);
+//     const link = document.createElement('a');
+//     link.href = url;
+//     link.download = 'data.geojson';
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+// }
 
 export default MapComponent;
