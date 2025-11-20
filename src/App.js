@@ -14,7 +14,7 @@ function App() {
   useEffect(() => {
     // Create Y.doc and provider ONCE
     const ydoc = new Y.Doc();
-    const provider = new WebrtcProvider(ROOM_NAME, ydoc, { signaling: ['ws://localhost:5555'] });
+    const provider = new WebrtcProvider(ROOM_NAME, ydoc, { signaling: ['ws://192.168.1.63:4444'] });
 
     docRef.current = ydoc;
     providerRef.current = provider;
