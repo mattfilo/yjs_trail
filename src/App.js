@@ -12,6 +12,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const docRef = useRef(null);
   const providerRef = useRef(null);
+  const [coordinates, setCoordinates] = useState({x: 250, y:250});
 
   const ROOM_NAME = 'ol-room';
 
@@ -94,13 +95,11 @@ function App() {
         cursor_map.set(fired_user_state.user.name, updated_cursor);
         console.log('Cursor_map is ', cursor_map);
       }
+      if (clientID !== MY_CID && updated_cursor) {
+        setCoordinates({x: updated_cursor.x, y: updated_cursor.y});
+      }
     });
   });
-
-  const coordinates = {
-    x: 250,
-    y: 500
-  };
 
   return (
     <div className="App">
