@@ -124,7 +124,6 @@ function observeEvents(ydoc, drawSource, geojsonData) {
             console.log("Added/Updated feature with id: ", key);
         }
         else if (change.action === "update" && drawSource.getFeatureById(key)) {
-            console.log(geojson.geometry);
             const newGeom = geojsonData.readGeometry(geojson.geometry);
             drawSource.getFeatureById(key).setGeometry(newGeom);
             console.log("Updated feature with id: ", key);
