@@ -49,7 +49,7 @@ function MapComponent(props) {
     useEffect(() => {
         observeEvents(yGeoJsonMap, drawSource, geojsonData);
         console.log('Oberserver was called')
-    }, []);
+    }, [yGeoJsonMap]);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
@@ -103,7 +103,7 @@ function addModifyInteraction(map, geojsonData, ydoc, drawSource) {
             const geojsonFeature = geojsonData.writeFeatureObject(feature);
             ydoc.set(id, geojsonFeature); // Update the feature in Yjs
 
-            modifyInteraction.setActive(false);
+            // modifyInteraction.setActive(false);
             console.log('Polygon modified:', feature.getGeometry().getCoordinates());
         });
     });
