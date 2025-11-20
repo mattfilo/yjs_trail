@@ -91,6 +91,7 @@ function addDrawInteraction(map, geojsonData, ydoc, drawSource) {
     
 }
 
+// Degradation occurs over length of client session - getArray is the error called, check here
 function addModifyInteraction(map, geojsonData, ydoc, drawSource) {
     const modifyInteraction = new Modify({source: drawSource});
 
@@ -108,7 +109,6 @@ function addModifyInteraction(map, geojsonData, ydoc, drawSource) {
         });
     });
 }
-
 
 function observeEvents(ydoc, drawSource, geojsonData) {
     ydoc.observe((event) => {
