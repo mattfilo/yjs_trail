@@ -1,32 +1,36 @@
 import MapComponent from './components/MapComponent';
 import './App.css';
-import { useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 
 function App() {
+  const [loading, setLoading] = useState(false);
   const docRef = useRef(null);
   const providerRef = useRef(null);
 
   const ROOM_NAME = 'ol-room';
 
-  // Initialize ydoc and provider
-  if (!docRef.current) {
+  useEffect(() => {
+    // Create Y.doc and provider ONCE
     const ydoc = new Y.Doc();
-    docRef.current = ydoc;
-  }
-  if (!providerRef.current) {
-    // Don't forget to start the signaling server if one is not already running:
-    // (run) PORT=4444 node ./node_modules/y-webrtc/bin/server.js
+    const provider = new WebrtcProvider(ROOM_NAME, ydoc, { signaling: ['ws://localhost:5555'] });
 
-    // If a signaling server is running on a different machine make sure that
-    // the machine's local ip address is correct in the signaling options below
-    const provider = new WebrtcProvider(ROOM_NAME, docRef.current, { signaling: ['ws://192.168.1.62:4444'] });
+    docRef.current = ydoc;
     providerRef.current = provider;
-  }
-  
-  console.log('ydoc is: ', docRef.current);
-  console.log('provider is: ', providerRef.current);
+
+    setLoading(true);
+    console.log('ydoc is: ', docRef.current);
+    console.log('provider is: ', providerRef.current);
+
+    return () => {
+      // Cleanup on unmount
+      provider.destroy();
+      ydoc.destroy();
+    };
+  }, []);
+
+  if (!loading) return <div>Loading...</div>;
 
   return (
     <div className="App">
