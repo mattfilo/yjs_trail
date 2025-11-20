@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 
+let cursor_map = new Map();
+
+
 function App() {
   // MARK: init yjs stuff
   const [loading, setLoading] = useState(false);
@@ -68,20 +71,18 @@ function App() {
     });
   });
 
-  let cursor_map = new Map();
   awareness.on('change', changes => {
     // From testing: added occurs when a new client joins the signaling server
     // updated occurs when some update to a state happens (like the trigger in
     // our mousedown event. added, updated, removed are all arrays
     const { added, updated, removed } = changes;
     const states = awareness.getStates();
-    console.log('Updated', updated);
 
     updated.forEach((clientID) => {
-      const fired_user = states.get(clientID); // The user that fired the updated event
-      const updated_cursor = states.get(clientID).cursor_moved || null;
-      if (fired_user.name && updated_cursor) {
-        cursor_map.set(fired_user.name, updated_cursor);
+      const fired_user_state = states.get(clientID); // The user that fired the updated event
+      const updated_cursor = states.get(clientID).cursor_moved;
+      if (fired_user_state.user.name) {
+        cursor_map.set(fired_user_state.user.name, updated_cursor);
         console.log('Cursor_map is ', cursor_map);
       }
     });
