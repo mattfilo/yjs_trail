@@ -3,6 +3,7 @@ import './App.css';
 import { useState, useRef, useEffect } from 'react';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
+import Cursor from './components/Cursor';
 
 let cursor_map = new Map(); // stores cursor positions for different clients on same webrtc conn
 
@@ -96,9 +97,15 @@ function App() {
     });
   });
 
+  const coordinates = {
+    x: 250,
+    y: 500
+  };
+
   return (
     <div className="App">
       Yjs OpenLayers Trial
+      <Cursor coordinates={coordinates} />
       <MapComponent ydoc={docRef.current} provider={providerRef.current} />
     </div>
   );
