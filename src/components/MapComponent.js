@@ -115,7 +115,6 @@ function observeEvents(ydoc, drawSource, geojsonData) {
     event.changes.keys.forEach((change, key) => {
         if (change.action === "add" || change.action === "update") {
         const geojson = ydoc.get(key);
-        console.log(change.action);
 
         // Prevent duplicates if we already added this feature
         if (!drawSource.getFeatureById(key)) {
