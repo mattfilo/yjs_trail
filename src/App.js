@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 
-let cursor_map = new Map();
-
+let cursor_map = new Map(); // stores cursor positions for different clients on same webrtc conn
 
 function App() {
   // MARK: init yjs stuff
@@ -57,18 +56,27 @@ function App() {
 
   // MARK: cursors
   // Track cursor movements
+  const UPDATES_PER_SEC = 1;
+  let currently_waiting = false;
   document.body.addEventListener('mousemove', (e) => {
-    const cursorPosition = {
-      x: e.clientX,
-      y: e.clientY
-    };
-    
-    // Propogate event to other clients
-    awareness.setLocalStateField('cursor_moved', {
-      x: cursorPosition.x,
-      y: cursorPosition.y,
-      timestamp: Date.now()
-    });
+    if (!currently_waiting) {
+      currently_waiting = true; // lock updates
+      const cursorPosition = {
+        x: e.clientX,
+        y: e.clientY
+      };
+
+      // Update cursor_moved object for some client 
+      awareness.setLocalStateField('cursor_moved', {
+        x: cursorPosition.x,
+        y: cursorPosition.y,
+        timestamp: Date.now()
+      });
+
+      setTimeout(() => {
+        currently_waiting = false;
+      }, 1000 / UPDATES_PER_SEC);
+    }
   });
 
   awareness.on('change', changes => {
@@ -81,7 +89,7 @@ function App() {
     updated.forEach((clientID) => {
       const fired_user_state = states.get(clientID); // The user that fired the updated event
       const updated_cursor = states.get(clientID).cursor_moved;
-      if (fired_user_state.user.name) {
+      if (fired_user_state.user.name && (cursor_map.get(fired_user_state.user.name) !== updated_cursor)) {
         cursor_map.set(fired_user_state.user.name, updated_cursor);
         console.log('Cursor_map is ', cursor_map);
       }
