@@ -22,7 +22,7 @@ function App() {
 
     // If a signaling server is running on a different machine make sure that
     // the machine's local ip address is correct in the signaling options below
-    const provider = new WebrtcProvider(ROOM_NAME, docRef.current, { signaling: ['ws://192.168.1.62:4444'] });
+    const provider = new WebrtcProvider(ROOM_NAME, docRef.current, { signaling: ['ws://192.168.1.63:4444'] });
     providerRef.current = provider;
   }
 
@@ -52,37 +52,24 @@ function App() {
     awareness.setLocalStateField('cursor_moved', {
       x: cursorPosition.x,
       y: cursorPosition.y,
-      message: `Cursor moved (${cursorPosition.x}, ${cursorPosition.y})`,
       timestamp: Date.now()
     });
   });
 
-  // console.log(`MY AWARENESS STATE ${awareness.getState(MY_CID)}`);
-
+  let cursor_map = new Map();
   awareness.on('change', changes => {
     // From testing: added occurs when a new client joins the signaling server
     // updated occurs when some update to a state happens (like the trigger in
-    // our mousedown event
+    // our mousedown event. added, updated, removed are all arrays
     const { added, updated, removed } = changes;
     const states = awareness.getStates();
 
-    // MARK: Problem here
-    // The issue here is that we are assuming an "updated" event was triggered
-    // Even when it is not triggered we try to access an undefined user in a null state
-    // [POTENTIAL FIX]: figure out how to "containerize" the code below
-    // so it only works when updated is some "real value".
-    // Problem with this: updated will be some value without being "real"
-    const fired_user = states.get(updated).user; // The user that fired the updated event
-    const updated_data = states.get(updated).cursor_moved;
-    // MARK: Problem end
-
-    states.forEach((state, clientID) => {
-      console.log('state is: ', state);
-      console.log('clientID for this state is: ', clientID);
-
-      if (clientID !== updated) {
-        const user = state.user; // {name: string, color: string}
-        console.log(`[User] ${fired_user.name} moved their cursor.`)
+    updated.forEach((clientID) => {
+      const fired_user = states.get(clientID); // The user that fired the updated event
+      const updated_cursor = states.get(clientID).cursor_moved || null;
+      if (fired_user.name && updated_cursor) {
+        cursor_map.set(fired_user.name, updated_cursor);
+        console.log('Cursor_map is ', cursor_map);
       }
     });
   });
@@ -95,6 +82,7 @@ function App() {
   );
 }
 
+// MARK: helper func
 function getRandomColor() {
   // Returns a string representing the hex of a random color
   let hex = '#';
