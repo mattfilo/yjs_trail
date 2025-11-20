@@ -28,6 +28,7 @@ function MapComponent(props) {
         new TileLayer({
             source: new OSM(), // Use OpenStreetMap as a base layer
         }),
+        drawLayer
         ],
         view: new View({
         center: fromLonLat([-98.5795, 39.8283]), // Initial center coordinates (e.g., longitude, latitude)
@@ -45,13 +46,16 @@ function MapComponent(props) {
 
     useEffect(() => {
         observeEvents(yGeoJsonMap, drawSource, geojsonData);
-    }, [yGeoJsonMap, drawSource, geojsonData]);
+    }, [yGeoJsonMap]);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
             <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
             <button onClick={() => addDrawInteraction(mapInstance.current, geojsonData, yGeoJsonMap, drawSource, drawLayer)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
                 {'Start Drawing'}
+            </button>
+            <button onClick={() => {drawLayer.getSource().clear(); yGeoJsonMap.clear();}} style={{ position: 'absolute', zIndex: 1, top: 50, left: 10 }}>
+                {'Clear Polygons'}
             </button>
         </div>
     );
@@ -62,7 +66,6 @@ function addDrawInteraction(map, geojsonData, ydoc, drawSource, drawLayer) {
     // const drawLayer = new VectorLayer({
     //     source: drawSource
     // })
-    map.addLayer(drawLayer);
 
     const drawInteraction = new Draw({
         source: drawSource,
@@ -84,6 +87,7 @@ function addDrawInteraction(map, geojsonData, ydoc, drawSource, drawLayer) {
     });
 }
 
+
 function observeEvents(ydoc, drawSource, geojsonData) {
     ydoc.observe((event) => {
     event.changes.keys.forEach((change, key) => {
@@ -100,9 +104,11 @@ function observeEvents(ydoc, drawSource, geojsonData) {
         }
 
         if (change.action === "delete") {
-        const feature = drawSource.getFeatureById(key)
-        if (feature) drawSource.removeFeature(feature)
-        }
+            const feature = drawSource.getFeatureById(key);
+            if (feature) {
+                drawSource.removeFeature(feature);
+                console.log("Deleted feature with id: ", key);
+            }}
     })
     });
 }
