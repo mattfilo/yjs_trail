@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import 'ol';
 import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
@@ -9,8 +9,8 @@ import VectorSource from 'ol/source/Vector';
 import VectorLayer   from 'ol/layer/Vector';
 import Draw          from 'ol/interaction/Draw';
 import GeoJSON       from 'ol/format/GeoJSON';
-import { v4 as uuid } from 'uuid';
 import Modify from 'ol/interaction/Modify';
+import { YJSMapBindings } from '../yjs/map-binding';
 
 function MapComponent(props) {
     const mapRef = useRef();
@@ -24,6 +24,7 @@ function MapComponent(props) {
         source: drawSource
     });
 
+    const { drawYJSFeature, modifyYJSFeature, yjsObserver } = YJSMapBindings({ydoc: yGeoJsonMap, drawSource, geojsonData});
 
     useEffect(() => {
     mapInstance.current = new Map({
@@ -46,18 +47,19 @@ function MapComponent(props) {
     };
     }, []); // Empty dependency array ensures it runs once on mount
 
+
     useEffect(() => {
-        observeEvents(yGeoJsonMap, drawSource, geojsonData);
+        yjsObserver();
         console.log('Oberserver was called')
     }, []);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
             <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
-            <button onClick={() => addDrawInteraction(mapInstance.current, geojsonData, yGeoJsonMap, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
+            <button onClick={() => addDrawInteraction(mapInstance.current, drawYJSFeature, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
                 {'Start Drawing'}
             </button>
-            <button onClick={() => addModifyInteraction(mapInstance.current, geojsonData, yGeoJsonMap, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 30, left: 10 }}>
+            <button onClick={() => addModifyInteraction(mapInstance.current, modifyYJSFeature, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 30, left: 10 }}>
                 {'Start Modifying'}
             </button>
             <button onClick={() => {drawLayer.getSource().clear(); yGeoJsonMap.clear();}} style={{ position: 'absolute', zIndex: 1, top: 50, left: 10 }}>
@@ -67,7 +69,7 @@ function MapComponent(props) {
     );
 }
 
-function addDrawInteraction(map, geojsonData, ydoc, drawSource) {
+function addDrawInteraction(map, drawYJSFeature, drawSource) {
     const drawInteraction = new Draw({
         source: drawSource,
         type: 'Polygon',
@@ -78,65 +80,23 @@ function addDrawInteraction(map, geojsonData, ydoc, drawSource) {
     map.addInteraction(drawInteraction);
 
     drawInteraction.on('drawend', function (event) {
-        const feature = event.feature;
-        const id = uuid()
-        feature.setId(id);
-        const geojsonFeature = geojsonData.writeFeatureObject(feature);
-        ydoc.set(id, geojsonFeature); // This (should) trigger the observer function
+        drawYJSFeature(event);
 
         drawInteraction.setActive(false);
         console.log('Polygon drawn:', event.feature.getGeometry().getCoordinates());
     });
-
-    
 }
 
-function addModifyInteraction(map, geojsonData, ydoc, drawSource) {
+function addModifyInteraction(map, modifyYJSFeature, drawSource) {
     const modifyInteraction = new Modify({source: drawSource});
 
     map.addInteraction(modifyInteraction);
     
     modifyInteraction.on('modifyend', function (event) { // modifications only get listened to on other client after clicking start drawing button then refreshing
-        const modifiedFeatures = event.features.getArray();
-        modifiedFeatures.forEach(function(feature) {
-            const id = feature.getId();
-            const geojsonFeature = geojsonData.writeFeatureObject(feature);
-            ydoc.set(id, geojsonFeature); // Update the feature in Yjs
+        modifyYJSFeature(event);
+        modifyInteraction.setActive(false);
+        console.log('Polygon modified:', event.features.getArray().map(feature => feature.getGeometry().getCoordinates()));
 
-            modifyInteraction.setActive(false);
-            console.log('Polygon modified:', feature.getGeometry().getCoordinates());
-        });
-    });
-}
-
-
-function observeEvents(ydoc, drawSource, geojsonData) {
-    ydoc.observe((event) => {
-    event.changes.keys.forEach((change, key) => {
-        if (change.action === "add" || change.action === "update") {
-        const geojson = ydoc.get(key);
-
-        // Prevent duplicates if we already added this feature
-        if (!drawSource.getFeatureById(key)) {
-            const feature = geojsonData.readFeature(geojson);
-            feature.setId(key);
-            drawSource.addFeature(feature);
-            console.log("Added/Updated feature with id: ", key);
-        }
-        else if (change.action === "update" && drawSource.getFeatureById(key)) {
-            const newGeom = geojsonData.readGeometry(geojson.geometry);
-            drawSource.getFeatureById(key).setGeometry(newGeom);
-            console.log("Updated feature with id: ", key);
-        }
-    }
-
-        if (change.action === "delete") {
-            const feature = drawSource.getFeatureById(key);
-            if (feature) {
-                drawSource.removeFeature(feature);
-                console.log("Deleted feature with id: ", key);
-            }}
-    })
     });
 }
 
