@@ -33,7 +33,7 @@ function App() {
     console.log('ydoc is: ', docRef.current);
     console.log('provider is: ', providerRef.current);
 
-    setupAwareness(providerRef.current, setCoordinates);
+    // setupAwareness(providerRef.current, setCoordinates);
 
 
     return () => {
@@ -48,7 +48,7 @@ function App() {
   return (
     <div className="App">
       Yjs OpenLayers Trial
-      <Cursor coordinates={coordinates} />
+      {/* <Cursor coordinates={coordinates} /> */}
       <MapComponent ydoc={docRef.current} provider={providerRef.current} />
     </div>
   );
