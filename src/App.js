@@ -60,7 +60,7 @@ function App() {
   return (
     <div className="App">
       Yjs OpenLayers Trial
-      <Cursor coordinates={coordinates} />
+      {/* <Cursor coordinates={coordinates} /> */}
       <MapComponent ydoc={docRef.current} provider={providerRef.current} />
     </div>
   );
