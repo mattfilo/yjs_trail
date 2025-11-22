@@ -27,42 +27,40 @@ function MapComponent(props) {
     const { drawYJSFeature, modifyYJSFeature, yjsObserver } = YJSMapBindings({ydoc: yGeoJsonMap, drawSource, geojsonData});
 
     useEffect(() => {
-    mapInstance.current = new Map({
-        target: mapRef.current, // Target the div element
-        layers: [
-            new TileLayer( {source: new OSM()} ), // Use OpenStreetMap as a base layer
-            drawLayer,
-        ],
-        view: new View({
-        center: fromLonLat([-98.5795, 39.8283]), // Initial center coordinates (e.g., longitude, latitude)
-        zoom: 5.1, // Initial zoom level
-        }),
-    });
-    // Cleanup function: Destroy the map when the component unmounts
-    return () => {
-        if (mapInstance.current) {
-        mapInstance.current.setTarget(undefined);
-        mapInstance.current = null;
-        }
+        mapInstance.current = new Map({
+            target: mapRef.current, // Target the div element
+            layers: [
+                new TileLayer( {source: new OSM()} ), // Use OpenStreetMap as a base layer
+                drawLayer,
+            ],
+            view: new View({
+            center: fromLonLat([-98.5795, 39.8283]), // Initial center coordinates (e.g., longitude, latitude)
+            zoom: 5.1, // Initial zoom level
+            }),
+        });
+        
+        yjsObserver(); // OBserver for YJS Communication (Listens continuously after only called once)
+
+        // Cleanup function: Destroy the map when the component unmounts
+        return () => {
+            if (mapInstance.current) {
+            mapInstance.current.setTarget(undefined);
+            mapInstance.current = null;
+            }
     };
     }, []); // Empty dependency array ensures it runs once on mount
 
 
-    useEffect(() => {
-        yjsObserver();
-        console.log('Oberserver was called')
-    }, []);
-
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
             <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
-            <button onClick={() => addDrawInteraction(mapInstance.current, drawYJSFeature, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 10 }}>
+            <button onClick={() => addDrawInteraction(mapInstance.current, drawYJSFeature, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 10, left: 35 }}>
                 {'Start Drawing'}
             </button>
-            <button onClick={() => addModifyInteraction(mapInstance.current, modifyYJSFeature, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 30, left: 10 }}>
+            <button onClick={() => addModifyInteraction(mapInstance.current, modifyYJSFeature, drawSource)} style={{ position: 'absolute', zIndex: 1, top: 30, left: 35 }}>
                 {'Start Modifying'}
             </button>
-            <button onClick={() => {drawLayer.getSource().clear(); yGeoJsonMap.clear();}} style={{ position: 'absolute', zIndex: 1, top: 50, left: 10 }}>
+            <button onClick={() => {drawLayer.getSource().clear(); yGeoJsonMap.clear();}} style={{ position: 'absolute', zIndex: 1, top: 50, left: 35 }}>
                 {'Clear Polygons'}
             </button>
         </div>
@@ -92,11 +90,11 @@ function addModifyInteraction(map, modifyYJSFeature, drawSource) {
 
     map.addInteraction(modifyInteraction);
     
-    modifyInteraction.on('modifyend', function (event) { // modifications only get listened to on other client after clicking start drawing button then refreshing
+    modifyInteraction.on('modifyend', function (event) {
         modifyYJSFeature(event);
+
         modifyInteraction.setActive(false);
         console.log('Polygon modified:', event.features.getArray().map(feature => feature.getGeometry().getCoordinates()));
-
     });
 }
 
