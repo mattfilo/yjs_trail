@@ -1,12 +1,11 @@
-import {useState} from 'react';
+import * as Y from 'yjs';
+import { WebrtcProvider } from 'y-webrtc';
 
-function setupAwareness(providerRef, setCoordinates) {
+function setupAwareness(cursor_provider, setCoordinates) {
 
   let cursor_map = new Map(); // stores cursor positions for different clients on same webrtc conn
 
-  // MARK: awareness
-  // Testing out awareness
-  const awareness = providerRef.awareness;
+  const awareness = cursor_provider.awareness;
   console.log('[AWARENESS CRDT]', awareness);
 
   awareness.setLocalStateField('user', {
@@ -20,7 +19,7 @@ function setupAwareness(providerRef, setCoordinates) {
 
   // MARK: cursors
   // Track cursor movements
-  const UPDATES_PER_SEC = 0.5;
+  const UPDATES_PER_SEC = 1;
   let currently_waiting = false;
   document.body.addEventListener('mousemove', (e) => {
     if (!currently_waiting) {
@@ -43,7 +42,7 @@ function setupAwareness(providerRef, setCoordinates) {
     }
   });
 
-  awareness.on('update', changes => {
+  awareness.on('change', changes => {
     // From testing: added occurs when a new client joins the signaling server
     // updated occurs when some update to a state happens (like the trigger in
     // our mousedown event. added, updated, removed are all arrays

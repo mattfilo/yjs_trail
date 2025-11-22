@@ -12,9 +12,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const docRef = useRef(null);
   const providerRef = useRef(null);
+  const cursor_docRef = useRef(null);
+  const cursor_providerRef = useRef(null);
   const [coordinates, setCoordinates] = useState({x: 250, y:250});
 
-  const ROOM_NAME = 'ol-room';
+  const MAIN_ROOM_NAME = 'ol-room';
 
   // Create Y.doc and provider ONCE
   useEffect(() => {
@@ -24,22 +26,32 @@ function App() {
 
     // If a signaling server is running on a different machine make sure that
     // the machine's local ip address is correct in the signaling options below
-    const provider = new WebrtcProvider(ROOM_NAME, ydoc, { signaling: ['ws://192.168.1.63:4444'] });
+    const provider = new WebrtcProvider(MAIN_ROOM_NAME, ydoc, { signaling: ['ws://192.168.12.38:4444'] });
 
     docRef.current = ydoc;
     providerRef.current = provider;
+
+    // Separate y-webrtc connection for cursor positions
+    // This prevents updates from flooding the main webrtc connection
+    const cursor_ydoc = new Y.Doc();
+    const cursor_provider = new WebrtcProvider('cursor-room', cursor_ydoc, { signaling: ['ws://192.168.12.38:7777'] });
+    
+    cursor_docRef.current = cursor_ydoc;
+    cursor_providerRef.current = cursor_provider;
 
     setLoading(true);
     console.log('ydoc is: ', docRef.current);
     console.log('provider is: ', providerRef.current);
 
-    setupAwareness(providerRef.current, setCoordinates);
+    setupAwareness(cursor_providerRef.current, setCoordinates);
 
 
     return () => {
       // Cleanup on unmount
       provider.destroy();
       ydoc.destroy();
+      cursor_provider.destroy();
+      cursor_ydoc.destroy();
     };
   }, []);
 
