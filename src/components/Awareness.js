@@ -2,7 +2,7 @@ import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { zoomByDelta } from 'ol/interaction/Interaction';
 
-function setupAwareness(cursor_provider, setCoordinates) {
+function setupAwareness(cursor_provider, setCoordinates, mapInstance) {
 
   let cursor_map = new Map(); // stores cursor positions for different clients on same webrtc conn
 
@@ -25,8 +25,8 @@ function setupAwareness(cursor_provider, setCoordinates) {
 
   function updateMapCoords(coords) {
     awareness.setLocalStateField('cursor_moved', {
-      x: coords?.x,
-      y: coords?.y,
+      mapX: coords.mapX,
+      mapY: coords.mapY,
       timestamp: Date.now()
     });
   }
@@ -44,9 +44,11 @@ function setupAwareness(cursor_provider, setCoordinates) {
       const state = states.get(clientID);
       const cursor = state.cursor_moved;
       if(cursor) {
+        const pixel = mapInstance.getPixelFromCoordinate([cursor.mapX, cursor.mapY]);
+        const mapRect = mapInstance.getTargetElement().getBoundingClientRect();
         setCoordinates({
-          x: state.cursor.x,
-          y: state.cursor.y,
+          x: pixel[0] + mapRect.left,
+          y: pixel[1] + mapRect.top,
           clientID: clientID
         })
       }

@@ -6,59 +6,54 @@ import { WebrtcProvider } from 'y-webrtc';
 import Cursor from './components/Cursor';
 import setupAwareness from './components/Awareness';
 
-
 function App() {
-  // MARK: init yjs stuff
   const [loading, setLoading] = useState(false);
   const docRef = useRef(null);
   const providerRef = useRef(null);
-  const cursor_docRef = useRef(null);
-  const cursor_providerRef = useRef(null);
-  const [coordinates, setCoordinates] = useState({x: 250, y:250});
+  const cursorDocRef = useRef(null);
+  const cursorProviderRef = useRef(null);
+
+  const [coordinates, setCoordinates] = useState({ x: 250, y: 250 });
+  const [mapInstance, setMapInstance] = useState(null);
 
   const MAIN_ROOM_NAME = 'ol-room';
 
-  // Create Y.doc and provider ONCE
   useEffect(() => {
+    // Main Yjs doc
     const ydoc = new Y.Doc();
-    // Don't forget to start the signaling server if one is not already running:
-    // (run) PORT=4444 node ./node_modules/y-webrtc/bin/server.js
-
-    // If a signaling server is running on a different machine make sure that
-    // the machine's local ip address is correct in the signaling options below
     const provider = new WebrtcProvider(MAIN_ROOM_NAME, ydoc, { signaling: ['ws://localhost:5555'] });
 
     docRef.current = ydoc;
     providerRef.current = provider;
 
-    // Separate y-webrtc connection for cursor positions
-    // This prevents updates from flooding the main webrtc connection
-    const cursor_ydoc = new Y.Doc();
-    const cursor_provider = new WebrtcProvider('cursor-room', cursor_ydoc, { signaling: ['ws://localhost:7777'] });
-    
-    cursor_docRef.current = cursor_ydoc;
-    cursor_providerRef.current = cursor_provider;
+    // Cursor Yjs doc
+    const cursorYdoc = new Y.Doc();
+    const cursorProvider = new WebrtcProvider('cursor-room', cursorYdoc, { signaling: ['ws://localhost:7777'] });
+
+    cursorDocRef.current = cursorYdoc;
+    cursorProviderRef.current = cursorProvider;
 
     setLoading(true);
-    console.log('ydoc is: ', docRef.current);
-    console.log('provider is: ', providerRef.current);
-
-    setupAwareness(cursor_providerRef.current, setCoordinates);
-
 
     return () => {
-      // Cleanup on unmount
       provider.destroy();
       ydoc.destroy();
-      cursor_provider.destroy();
-      cursor_ydoc.destroy();
+      cursorProvider.destroy();
+      cursorYdoc.destroy();
     };
   }, []);
 
-  // RECEIVE MAP CURSOR & SEND TO AWARENESS
+  // Initialize awareness once map is ready
+  useEffect(() => {
+    if (mapInstance && cursorProviderRef.current) {
+      setupAwareness(cursorProviderRef.current, setCoordinates, mapInstance);
+    }
+  }, [mapInstance]);
+
+  // Receive pointer move from MapComponent and send to Awareness
   const handleMapMove = (coords) => {
-    if (cursor_providerRef.current?.updateMapCoords) {
-      cursor_providerRef.current.updateMapCoords(coords);
+    if (cursorProviderRef.current?.updateMapCoords) {
+      cursorProviderRef.current.updateMapCoords(coords);
     }
   };
 
@@ -68,14 +63,14 @@ function App() {
     <div className="App">
       Yjs OpenLayers Trial
       <Cursor coordinates={coordinates} />
-      <MapComponent 
-        ydoc={docRef.current} 
+      <MapComponent
+        ydoc={docRef.current}
         provider={providerRef.current}
-        onMapMouseMove={handleMapMove} />
+        onMapMouseMove={handleMapMove}
+        onMapReady={setMapInstance}
+      />
     </div>
   );
 }
-
-
 
 export default App;
