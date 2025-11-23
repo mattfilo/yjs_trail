@@ -26,7 +26,7 @@ function App() {
 
     // If a signaling server is running on a different machine make sure that
     // the machine's local ip address is correct in the signaling options below
-    const provider = new WebrtcProvider(MAIN_ROOM_NAME, ydoc, { signaling: ['ws://192.168.12.38:4444'] });
+    const provider = new WebrtcProvider(MAIN_ROOM_NAME, ydoc, { signaling: ['ws://localhost:5555'] });
 
     docRef.current = ydoc;
     providerRef.current = provider;
@@ -34,7 +34,7 @@ function App() {
     // Separate y-webrtc connection for cursor positions
     // This prevents updates from flooding the main webrtc connection
     const cursor_ydoc = new Y.Doc();
-    const cursor_provider = new WebrtcProvider('cursor-room', cursor_ydoc, { signaling: ['ws://192.168.12.38:7777'] });
+    const cursor_provider = new WebrtcProvider('cursor-room', cursor_ydoc, { signaling: ['ws://localhost:7777'] });
     
     cursor_docRef.current = cursor_ydoc;
     cursor_providerRef.current = cursor_provider;
@@ -55,13 +55,23 @@ function App() {
     };
   }, []);
 
+  // RECEIVE MAP CURSOR & SEND TO AWARENESS
+  const handleMapMove = (coords) => {
+    if (cursor_providerRef.current?.updateMapCoords) {
+      cursor_providerRef.current.updateMapCoords(coords);
+    }
+  };
+
   if (!loading) return <div>Loading...</div>;
 
   return (
     <div className="App">
       Yjs OpenLayers Trial
-      {/* <Cursor coordinates={coordinates} /> */}
-      <MapComponent ydoc={docRef.current} provider={providerRef.current} />
+      <Cursor coordinates={coordinates} />
+      <MapComponent 
+        ydoc={docRef.current} 
+        provider={providerRef.current}
+        onMapMouseMove={handleMapMove} />
     </div>
   );
 }

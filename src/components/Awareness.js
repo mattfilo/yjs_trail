@@ -1,5 +1,6 @@
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
+import { zoomByDelta } from 'ol/interaction/Interaction';
 
 function setupAwareness(cursor_provider, setCoordinates) {
 
@@ -21,26 +22,15 @@ function setupAwareness(cursor_provider, setCoordinates) {
   // Track cursor movements
   const UPDATES_PER_SEC = 1;
   let currently_waiting = false;
-  document.body.addEventListener('mousemove', (e) => {
-    if (!currently_waiting) {
-      currently_waiting = true; // lock updates
-      const cursorPosition = {
-        x: e.clientX,
-        y: e.clientY
-      };
 
-      // Update cursor_moved object for some client 
-      awareness.setLocalStateField('cursor_moved', {
-        x: cursorPosition.x,
-        y: cursorPosition.y,
-        timestamp: Date.now()
-      });
-
-      setTimeout(() => {
-        currently_waiting = false;
-      }, 1000 / UPDATES_PER_SEC);
-    }
-  });
+  function updateMapCoords(coords) {
+    awareness.setLocalStateField('cursor_moved', {
+      x: coords?.x,
+      y: coords?.y,
+      timestamp: Date.now()
+    });
+  }
+  cursor_provider.updateMapCoords = updateMapCoords;
 
   awareness.on('change', changes => {
     // From testing: added occurs when a new client joins the signaling server
@@ -50,16 +40,20 @@ function setupAwareness(cursor_provider, setCoordinates) {
     const states = awareness.getStates();
 
     updated.forEach((clientID) => {
-      const fired_user_state = states.get(clientID); // The user that fired the updated event
-      const updated_cursor = states.get(clientID).cursor_moved;
-      if (fired_user_state.user.name && (cursor_map.get(fired_user_state.user.name) !== updated_cursor)) {
-        cursor_map.set(fired_user_state.user.name, updated_cursor);
-        console.log('Cursor_map is ', cursor_map);
-      }
-      if (clientID !== MY_CID && updated_cursor) {
-        setCoordinates({x: updated_cursor.x, y: updated_cursor.y});
+      if(clientID === MY_CID) return; // skip self updates
+      const state = states.get(clientID);
+      const cursor = state.cursor_moved;
+      if(cursor) {
+        setCoordinates({
+          x: state.cursor.x,
+          y: state.cursor.y,
+          clientID: clientID
+        })
       }
     });
+  });
+  window.addEventListener('mousemove', (e) => {
+    awareness.setLocalStateField('cursor', { x: e.clientX, y: e.clientY });
   });
 }
 

@@ -4,13 +4,15 @@ import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 import 'ol/ol.css'; // Import OpenLayers CSS for styling
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat, get } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer   from 'ol/layer/Vector';
 import Draw          from 'ol/interaction/Draw';
 import GeoJSON       from 'ol/format/GeoJSON';
 import { v4 as uuid } from 'uuid';
 import Modify from 'ol/interaction/Modify';
+import MousePosition from 'ol/control/MousePosition';
+import { createStringXY } from 'ol/coordinate';
 
 function MapComponent(props) {
     const mapRef = useRef();
@@ -37,6 +39,13 @@ function MapComponent(props) {
         zoom: 5.1, // Initial zoom level
         }),
     });
+
+    // getMousePosition(mapInstance.current);
+    mapInstance.current.on('pointermove', (e) =>{
+        const lonlat = toLonLat(e.coordinate);
+        props.onMapMouseMove?.({x: lonlat[0], y: lonlat[1]});
+    })
+
     // Cleanup function: Destroy the map when the component unmounts
     return () => {
         if (mapInstance.current) {
@@ -50,6 +59,7 @@ function MapComponent(props) {
         observeEvents(yGeoJsonMap, drawSource, geojsonData);
         console.log('Oberserver was called')
     }, [yGeoJsonMap]);
+
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
@@ -66,6 +76,16 @@ function MapComponent(props) {
         </div>
     );
 }
+
+// function getMousePosition(map) {
+//     const mousePositionControl = new MousePosition({
+//         coordinateFormat: createStringXY(4),
+//         projection: 'EPSG:4326',
+//         className: 'custom-mouse-position',
+//         target: document.getElementById('mouse-position')
+//     });
+//     map.addControl(mousePositionControl);
+// }
 
 function addDrawInteraction(map, geojsonData, ydoc, drawSource) {
     const drawInteraction = new Draw({
@@ -87,8 +107,6 @@ function addDrawInteraction(map, geojsonData, ydoc, drawSource) {
         drawInteraction.setActive(false);
         console.log('Polygon drawn:', event.feature.getGeometry().getCoordinates());
     });
-
-    
 }
 
 // Degradation occurs over length of client session - getArray is the error called, check here
