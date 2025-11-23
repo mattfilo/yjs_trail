@@ -54,9 +54,6 @@ function setupAwareness(cursor_provider, setCoordinates, mapInstance) {
       }
     });
   });
-  window.addEventListener('mousemove', (e) => {
-    awareness.setLocalStateField('cursor', { x: e.clientX, y: e.clientY });
-  });
 }
 
 // MARK: helper func
